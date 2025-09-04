@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>AddMeFast Clone</title>
+</head>
+<body>
+  <h1>🚀 AddMeFast Clone</h1>
+
+  <!-- التسجيل -->
+  <section>
+    <h2>تسجيل حساب</h2>
+    <input type="text" id="reg_username" placeholder="الاسم">
+    <input type="email" id="reg_email" placeholder="الإيميل">
+    <input type="password" id="reg_password" placeholder="كلمة المرور">
+    <button onclick="register()">تسجيل</button>
+  </section>
+
+  <!-- تسجيل الدخول -->
+  <section>
+    <h2>تسجيل الدخول</h2>
+    <input type="email" id="login_email" placeholder="الإيميل">
+    <input type="password" id="login_password" placeholder="كلمة المرور">
+    <button onclick="login()">دخول</button>
+  </section>
+
+  <!-- بيانات المستخدم -->
+  <section>
+    <h2>👤 بياناتي</h2>
+    <button onclick="getMe()">عرض بياناتي</button>
+    <pre id="me"></pre>
+  </section>
+
+  <!-- المهام -->
+  <section>
+    <h2>📝 المهام</h2>
+    <button onclick="loadTasks()">تحميل المهام</button>
+    <ul id="tasks"></ul>
+  </section>
+
+  <script>
+    const API_BASE = "https://YOUR-PROJECT.vercel.app/api"; // غيره برابط مشروعك
+    let token = null;
+
+    async function register() {
+      const username = document.getElementById("reg_username").value;
+      const email = document.getElementById("reg_email").value;
+      const password = document.getElementById("reg_password").value;
+
+      const res = await fetch(`${API_BASE}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password })
+      });
+      const data = await res.json();
+      if (data.token) {
+        token = data.token;
+        alert("تم التسجيل بنجاح ✅");
+      } else {
+        alert("خطأ في التسجيل ❌");
+      }
+    }
+
+    async function login() {
+      const email = document.getElementById("login_email").value;
+      const password = document.getElementById("login_password").value;
+
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (data.token) {
+        token = data.token;
+        alert("تم تسجيل الدخول ✅");
+      } else {
+        alert("خطأ في تسجيل الدخول ❌");
+      }
+    }
+
+    async function getMe() {
+      const res = await fetch(`${API_BASE}/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      document.getElementById("me").textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function loadTasks() {
+      const res = await fetch(`${API_BASE}/tasks`);
+      const tasks = await res.json();
+      const ul = document.getElementById("tasks");
+      ul.innerHTML = "";
+      tasks.forEach(task => {
+        const li = document.createElement("li");
+        li.textContent = `${task.title} (+${task.pointsReward} نقطة) `;
+        const btn = document.createElement("button");
+        btn.textContent = "إكمال";
+        btn.onclick = () => completeTask(task._id);
+        li.appendChild(btn);
+        ul.appendChild(li);
+      });
+    }
+
+    async function completeTask(taskId) {
+      const res = await fetch(`${API_BASE}/complete`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ taskId })
+      });
+      const data = await res.json();
+      alert("✅ نقاطك الحالية: " + data.points);
+    }
+  </script>
+</body>
+</html>
